@@ -7,15 +7,32 @@ on:
     branches: [ main, master ]
 
 jobs:
-  test-slim-bookworm:
+  test-slim-bookworm-amd64:
     runs-on: ubuntu-latest
     container:
       image: python:3.10-slim-bookworm
+      options: --platform linux/amd64
     
     steps:
+    - name: Show system info
+      run: |
+        echo "=== System Information ==="
+        uname -a
+        lscpu | grep Architecture || echo "lscpu not available"
+        dpkg --print-architecture || echo "dpkg not available"
+        python -c "import platform; print(f'Python platform: {platform.platform()}')"
+        python -c "import platform; print(f'Machine: {platform.machine()}')"
+        echo "=== Environment ==="
+        env | grep -E "(GITHUB|RUNNER)" | sort
+        echo "=========================="
+    
     - name: Checkout code
       uses: actions/checkout@v4
     
+    - name: Install system dependencies (simulate k8s environment)
+      run: |
+        apt-get update
+        apt-get install -y git procps
     
     - name: Install PDM
       run: |
@@ -23,17 +40,27 @@ jobs:
         echo "$HOME/.local/bin" >> $GITHUB_PATH
     
     - name: Verify PDM installation
-      run: pdm --version
+      run: |
+        pdm --version
+        pdm info
     
-    - name: PDM sync (this should crash with slim-bookworm)
+    - name: PDM sync (this should crash with slim-bookworm on AMD64)
       run: pdm sync
 
-  test-regular-python:
+  test-regular-python-amd64:
     runs-on: ubuntu-latest
     container:
       image: python:3.10
+      options: --platform linux/amd64
     
     steps:
+    - name: Show system info
+      run: |
+        echo "=== System Information ==="
+        uname -a
+        python -c "import platform; print(f'Python platform: {platform.platform()}')"
+        python -c "import platform; print(f'Machine: {platform.machine()}')"
+    
     - name: Checkout code
       uses: actions/checkout@v4
     
@@ -43,7 +70,9 @@ jobs:
         echo "$HOME/.local/bin" >> $GITHUB_PATH
     
     - name: Verify PDM installation
-      run: pdm --version
+      run: |
+        pdm --version
+        pdm info
     
     - name: PDM sync (this should work with regular python image)
       run: pdm sync
