@@ -1,0 +1,49 @@
+name: Test PDM with slim-bookworm
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test-slim-bookworm:
+    runs-on: ubuntu-latest
+    container:
+      image: python:3.10-slim-bookworm
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    
+    - name: Install PDM
+      run: |
+        pip install --user pdm
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
+    
+    - name: Verify PDM installation
+      run: pdm --version
+    
+    - name: PDM sync (this should crash with slim-bookworm)
+      run: pdm sync
+
+  test-regular-python:
+    runs-on: ubuntu-latest
+    container:
+      image: python:3.10
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Install PDM
+      run: |
+        pip install --user pdm
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
+    
+    - name: Verify PDM installation
+      run: pdm --version
+    
+    - name: PDM sync (this should work with regular python image)
+      run: pdm sync
